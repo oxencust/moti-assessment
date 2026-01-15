@@ -1340,18 +1340,23 @@
     <script>
         // ==================== 設定區（請填入） ====================
         var CONFIG = {
-            // 【請填入】Make Webhook URL
-            MAKE_WEBHOOK_URL: 'YOUR_MAKE_WEBHOOK_URL',
+            // 【請填入】Make Webhook URL（查詢會員 + 提交評估）
+            MAKE_WEBHOOK_URL: 'https://hook.us2.make.com/vsk129ur2xv54sscfoflt5aacil4mws2',
             
-            // 【請填入】ImageKit 設定
-            IMAGEKIT_PUBLIC_KEY: 'YOUR_IMAGEKIT_PUBLIC_KEY',
-            IMAGEKIT_URL_ENDPOINT: 'https://ik.imagekit.io/YOUR_IMAGEKIT_ID/',
+            // 【請填入】Apps Script URL（ImageKit 簽名）
+            IMAGEKIT_AUTH_URL: 'https://script.google.com/macros/s/AKfycbyoVmFxHHtH8xnHlvUVrADYOepAywFyTLh9GSql8LMiahIdgxNMedrI0elfT1yDr2Fw/exec',
             
-            // 圖片壓縮設定
+            // 【請填入】ImageKit Public Key
+            IMAGEKIT_PUBLIC_KEY: 'public_tS8YfdCMhUonkM8VMZ+cCg71SHw=',
+            
+            // 【請填入】ImageKit URL Endpoint
+            IMAGEKIT_URL_ENDPOINT: 'https://ik.imagekit.io/hanhealth/',
+            
+            // 圖片壓縮設定（不用改）
             MAX_IMAGE_WIDTH: 1200,
             IMAGE_QUALITY: 0.7,
             
-            // 上傳限制
+            // 上傳限制（不用改）
             MAX_MOTI_IMAGES: 20,
             MAX_INBODY_IMAGES: 1
         };
@@ -1674,17 +1679,13 @@
 
         // ==================== 圖片上傳到 ImageKit ====================
         async function uploadToImageKit(file, folder) {
-            // 取得簽名
-            var authResponse = await fetch(CONFIG.MAKE_WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'get_imagekit_auth'
-                })
+            // 從 Apps Script 取得簽名
+            var authResponse = await fetch(CONFIG.IMAGEKIT_AUTH_URL, {
+                method: 'GET'
             });
             var auth = await authResponse.json();
             
-            // 上傳圖片
+            // 上傳圖片到 ImageKit
             var formData = new FormData();
             formData.append('file', file);
             formData.append('publicKey', CONFIG.IMAGEKIT_PUBLIC_KEY);
@@ -1692,7 +1693,7 @@
             formData.append('expire', auth.expire);
             formData.append('token', auth.token);
             formData.append('folder', folder);
-            formData.append('fileName', file.name);
+            formData.append('fileName', Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9.]/g, '_'));
             
             var uploadResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
                 method: 'POST',
@@ -1700,6 +1701,11 @@
             });
             
             var result = await uploadResponse.json();
+            
+            if (result.error) {
+                throw new Error(result.error.message || '上傳失敗');
+            }
+            
             return result.url;
         }
 
