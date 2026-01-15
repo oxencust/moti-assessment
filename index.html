@@ -583,25 +583,223 @@
         .member-result-title {
             font-weight: 600;
             color: var(--green-dark);
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+        .member-info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .member-info-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .member-info-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .member-info-value {
+            font-weight: 600;
+            color: var(--green-dark);
+            font-size: 0.95rem;
+        }
+        .first-time-badge {
+            background: var(--yellow-light);
+            border: 2px solid var(--yellow);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            color: var(--yellow-dark);
+            font-weight: 500;
+        }
+        
+        /* 時間軸區塊 */
+        .timeline-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px dashed var(--green);
+        }
+        .timeline-title {
+            font-weight: 600;
+            color: var(--green-dark);
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        .timeline-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 15px;
+            overflow-x: auto;
+        }
+        .timeline-track {
             display: flex;
+            align-items: flex-start;
+            position: relative;
+            min-width: max-content;
+            padding: 0 10px;
+        }
+        .timeline-track::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--green) 0%, var(--blue) 100%);
+            border-radius: 2px;
+            z-index: 0;
+        }
+        .timeline-node {
+            display: flex;
+            flex-direction: column;
             align-items: center;
+            padding: 0 20px;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.2s ease;
+        }
+        .timeline-node:hover {
+            transform: translateY(-3px);
+        }
+        .timeline-node.active .timeline-dot {
+            transform: scale(1.4);
+            box-shadow: 0 0 0 4px rgba(122, 193, 154, 0.3);
+        }
+        .timeline-node.active .timeline-date {
+            color: var(--green-dark);
+            font-weight: 700;
+        }
+        .timeline-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--green) 0%, var(--blue) 100%);
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+        .timeline-dot.new {
+            background: linear-gradient(135deg, var(--yellow) 0%, var(--yellow-dark) 100%);
+            animation: pulse-new 2s infinite;
+        }
+        @keyframes pulse-new {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 224, 139, 0.6); }
+            50% { box-shadow: 0 0 0 8px rgba(255, 224, 139, 0); }
+        }
+        .timeline-date {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--blue-dark);
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+        .timeline-year {
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 2px;
+        }
+        .timeline-node-new .timeline-date {
+            color: var(--yellow-dark);
+        }
+        .timeline-node-new .timeline-year {
+            color: var(--yellow-dark);
+            font-weight: 500;
+        }
+        
+        /* 時間軸詳情 */
+        .timeline-detail {
+            margin-top: 15px;
+            min-height: 120px;
+        }
+        .timeline-detail-hint {
+            text-align: center;
+            color: #999;
+            font-size: 0.85rem;
+            padding: 40px 20px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 10px;
+            border: 2px dashed #ddd;
+        }
+        .detail-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .detail-card.animate-in {
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .detail-header {
+            background: linear-gradient(135deg, var(--green) 0%, var(--blue) 100%);
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .detail-date {
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .detail-badge {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .detail-body {
+            padding: 15px;
+        }
+        .detail-row {
+            margin-bottom: 12px;
+        }
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+        .detail-label {
+            display: block;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .detail-value {
+            font-weight: 600;
+            color: var(--green-dark);
+            font-size: 1rem;
+        }
+        .risk-tags {
+            display: flex;
+            flex-wrap: wrap;
             gap: 8px;
         }
-        .member-result-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        .member-result-label {
-            color: #666;
-            min-width: 80px;
-        }
-        .member-result-value {
+        .risk-tag {
+            background: var(--pink-light);
+            color: var(--pink-dark);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 500;
-            color: #333;
         }
+        .no-data {
+            color: #999;
+            font-size: 0.85rem;
+        }
+        
         .search-row {
             display: flex;
             gap: 10px;
@@ -619,6 +817,35 @@
             margin-top: 15px;
             color: var(--pink-dark);
             text-align: center;
+        }
+        
+        @media (max-width: 767px) {
+            .member-info-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .member-info-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-align: left;
+            }
+            .member-info-label {
+                display: inline;
+                margin-bottom: 0;
+            }
+            .search-row {
+                flex-direction: column;
+            }
+            .search-row .form-group {
+                width: 100%;
+            }
+            .timeline-node {
+                padding: 0 15px;
+            }
+            .timeline-container {
+                padding: 15px 10px;
+            }
         }
 
         /* 圖片上傳區 */
@@ -851,31 +1078,13 @@
         <div class="main-content active" id="page1">
             <div class="card">
                 <h2 class="card-title">📋 會員資料</h2>
-                <div class="tab-buttons">
-                    <button class="tab-btn active" onclick="setStudentType('new')">新生</button>
-                    <button class="tab-btn" onclick="setStudentType('existing')">舊生</button>
+                <div class="search-row">
+                    <div class="form-group"><label class="form-label">姓名 *</label><input type="text" class="form-input" id="memberName" placeholder="請輸入會員姓名"></div>
+                    <div class="form-group"><label class="form-label">電話 *</label><input type="tel" class="form-input" id="memberPhone" placeholder="請輸入聯絡電話"></div>
+                    <button class="btn btn-search" onclick="searchMember()">🔍 查詢</button>
                 </div>
-                <div id="newStudentForm">
-                    <div class="search-row">
-                        <div class="form-group"><label class="form-label">姓名 *</label><input type="text" class="form-input" id="memberName" placeholder="請輸入會員姓名"></div>
-                        <div class="form-group"><label class="form-label">電話 *</label><input type="tel" class="form-input" id="memberPhone" placeholder="請輸入聯絡電話"></div>
-                        <button class="btn btn-search" onclick="searchMember('new')">🔍 查詢</button>
-                    </div>
-                    <div id="newMemberSearchResult"></div>
-                    <div class="form-group" style="margin-top: 15px;"><label class="form-label">檢測日期</label><input type="date" class="form-input" id="assessmentDate"></div>
-                </div>
-                <div id="existingStudentForm" style="display: none;">
-                    <div class="search-row">
-                        <div class="form-group"><label class="form-label">姓名 *</label><input type="text" class="form-input" id="searchName" placeholder="請輸入姓名"></div>
-                        <div class="form-group"><label class="form-label">電話 *</label><input type="tel" class="form-input" id="searchPhone" placeholder="請輸入電話"></div>
-                        <button class="btn btn-search" onclick="searchMember('existing')">🔍 查詢</button>
-                    </div>
-                    <div id="existingMemberSearchResult"></div>
-                    <div class="form-group" style="margin-top: 15px;">
-                        <label class="form-label">檢測日期</label>
-                        <input type="date" class="form-input" id="existingAssessmentDate">
-                    </div>
-                </div>
+                <div id="memberSearchResult"></div>
+                <div class="form-group" style="margin-top: 15px;"><label class="form-label">檢測日期</label><input type="date" class="form-input" id="assessmentDate"></div>
             </div>
             <div class="nav-buttons"><div></div><button class="btn btn-primary" onclick="nextPage()">下一步 →</button></div>
         </div>
@@ -1370,7 +1579,8 @@
         var motiFiles = [];
         var inbodyFiles = [];
         var memberData = null;
-        var currentPage = 1, studentType = 'new', currentSkeletonStep = 0, currentMuscleStepIndex = 0, muscleEntryCounter = 0;
+        var historyData = [];
+        var currentPage = 1, currentSkeletonStep = 0, currentMuscleStepIndex = 0, muscleEntryCounter = 0;
 
         // 熱點座標
         var hotspotsFS = [
@@ -1484,7 +1694,6 @@
         // ==================== 初始化 ====================
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('assessmentDate').valueAsDate = new Date();
-            document.getElementById('existingAssessmentDate').valueAsDate = new Date();
             initMuscleHotspots();
             initHalfStarRatings();
             initDragDrop();
@@ -1493,19 +1702,9 @@
         });
 
         // ==================== 會員查詢 ====================
-        async function searchMember(type) {
-            // 根據類型取得輸入值
-            var name, phone, resultContainerId;
-            
-            if (type === 'new') {
-                name = document.getElementById('memberName').value.trim();
-                phone = document.getElementById('memberPhone').value.trim();
-                resultContainerId = 'newMemberSearchResult';
-            } else {
-                name = document.getElementById('searchName').value.trim();
-                phone = document.getElementById('searchPhone').value.trim();
-                resultContainerId = 'existingMemberSearchResult';
-            }
+        async function searchMember() {
+            var name = document.getElementById('memberName').value.trim();
+            var phone = document.getElementById('memberPhone').value.trim();
             
             if (!name || !phone) {
                 showToast('請輸入姓名和電話');
@@ -1530,48 +1729,118 @@
                 
                 if (result.success && result.member) {
                     memberData = result.member;
-                    showMemberResult(result.member, result.history || [], type, resultContainerId);
+                    showMemberResult(result.member, result.history || []);
                 } else {
-                    showMemberError('查無此會員，請確認姓名和電話是否正確', resultContainerId);
+                    showMemberError('查無此會員，請確認姓名和電話是否正確，或先至系統建檔');
                 }
             } catch (error) {
                 hideLoading();
-                showMemberError('查詢失敗，請稍後再試', resultContainerId);
+                showMemberError('查詢失敗，請稍後再試');
                 console.error('Search error:', error);
             }
         }
 
-        function showMemberResult(member, history, type, containerId) {
+        function showMemberResult(member, history) {
             var html = '<div class="member-result">' +
                 '<div class="member-result-title">✅ 查詢成功</div>' +
-                '<div class="member-result-row"><span class="member-result-label">學生編號</span><span class="member-result-value">' + member.id + '</span></div>' +
-                '<div class="member-result-row"><span class="member-result-label">姓名</span><span class="member-result-value">' + member.name + '</span></div>' +
-                '<div class="member-result-row"><span class="member-result-label">電話</span><span class="member-result-value">' + member.phone + '</span></div>';
+                '<div class="member-info-grid">' +
+                '<div class="member-info-item"><span class="member-info-label">學生編號</span><span class="member-info-value">' + member.id + '</span></div>' +
+                '<div class="member-info-item"><span class="member-info-label">姓名</span><span class="member-info-value">' + member.name + '</span></div>' +
+                '<div class="member-info-item"><span class="member-info-label">電話</span><span class="member-info-value">' + member.phone + '</span></div>' +
+                '</div>';
             
-            // 只有舊生才顯示歷史檢測紀錄
-            if (type === 'existing' && history.length > 0) {
-                html += '<div style="margin-top: 15px;"><label class="form-label">歷史檢測紀錄</label>' +
-                    '<select class="form-input" id="historySelect" onchange="loadHistory(this.value)">' +
-                    '<option value="">建立新檢測</option>';
-                history.forEach(function(h) {
-                    html += '<option value="' + h.id + '">' + h.date + '</option>';
-                });
-                html += '</select></div>';
+            // 儲存歷史資料到全域變數（從舊到新排序）
+            historyData = history.slice().reverse();
+            
+            // 時間軸區塊
+            html += '<div class="timeline-section">' +
+                '<div class="timeline-title">📋 檢測歷程</div>' +
+                '<div class="timeline-container">' +
+                '<div class="timeline-track">';
+            
+            // 歷史紀錄節點
+            historyData.forEach(function(h, index) {
+                var dateObj = new Date(h.date);
+                var month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+                var day = dateObj.getDate().toString().padStart(2, '0');
+                var year = dateObj.getFullYear();
+                
+                html += '<div class="timeline-node" data-index="' + index + '" onclick="showHistoryDetail(' + index + ')">' +
+                    '<div class="timeline-dot"></div>' +
+                    '<div class="timeline-date">' + month + '/' + day + '</div>' +
+                    '<div class="timeline-year">' + year + '</div>' +
+                    '</div>';
+            });
+            
+            // 今天的節點（新增檢測）
+            html += '<div class="timeline-node timeline-node-new">' +
+                '<div class="timeline-dot new"></div>' +
+                '<div class="timeline-date">今天</div>' +
+                '<div class="timeline-year">新增</div>' +
+                '</div>';
+            
+            html += '</div></div>'; // 關閉 timeline-track 和 timeline-container
+            
+            // 歷史詳情顯示區
+            if (historyData.length > 0) {
+                html += '<div class="timeline-detail" id="timelineDetail">' +
+                    '<div class="timeline-detail-hint">👆 點擊上方時間點查看詳細紀錄</div>' +
+                    '</div>';
+            } else {
+                html += '<div class="first-time-badge">🎉 首次檢測，開始建立體態紀錄吧！</div>';
             }
             
-            html += '</div>';
-            document.getElementById(containerId).innerHTML = html;
+            html += '</div>'; // 關閉 timeline-section
+            html += '</div>'; // 關閉 member-result
+            
+            document.getElementById('memberSearchResult').innerHTML = html;
+        }
+        
+        function showHistoryDetail(index) {
+            var h = historyData[index];
+            if (!h) return;
+            
+            // 高亮選中的節點
+            document.querySelectorAll('.timeline-node').forEach(function(node, i) {
+                node.classList.toggle('active', i === index);
+            });
+            
+            var risks = [h.risk_1, h.risk_2, h.risk_3].filter(function(r) { return r; });
+            var risksHtml = risks.length > 0 
+                ? risks.map(function(r, i) { return '<span class="risk-tag">' + (i + 1) + '. ' + r + '</span>'; }).join('')
+                : '<span class="no-data">無紀錄</span>';
+            
+            var html = '<div class="detail-card animate-in">' +
+                '<div class="detail-header">' +
+                '<span class="detail-date">📅 ' + h.date + '</span>' +
+                '<span class="detail-badge">第 ' + (index + 1) + ' 次檢測</span>' +
+                '</div>' +
+                '<div class="detail-body">' +
+                '<div class="detail-row">' +
+                '<span class="detail-label">⚠️ 風險排名</span>' +
+                '<div class="risk-tags">' + risksHtml + '</div>' +
+                '</div>' +
+                '<div class="detail-row">' +
+                '<span class="detail-label">📝 建議堂數</span>' +
+                '<span class="detail-value">' + (h.total_courses || 0) + ' 堂</span>' +
+                '</div>';
+            
+            // 如果有更多資料可以顯示
+            if (h.short_term_goal) {
+                html += '<div class="detail-row">' +
+                    '<span class="detail-label">🎯 短期目標</span>' +
+                    '<span class="detail-value">' + h.short_term_goal + '</span>' +
+                    '</div>';
+            }
+            
+            html += '</div></div>';
+            
+            document.getElementById('timelineDetail').innerHTML = html;
         }
 
-        function showMemberError(msg, containerId) {
-            document.getElementById(containerId).innerHTML = '<div class="search-error">' + msg + '</div>';
+        function showMemberError(msg) {
+            document.getElementById('memberSearchResult').innerHTML = '<div class="search-error">' + msg + '</div>';
             memberData = null;
-        }
-
-        function loadHistory(historyId) {
-            if (historyId) {
-                showToast('載入歷史紀錄功能開發中');
-            }
         }
 
         // ==================== 圖片上傳 ====================
@@ -1778,25 +2047,12 @@
 
         // ==================== 表單收集與提交 ====================
         function collectFormData() {
-            // 根據類型取得姓名和電話
-            var inputName, inputPhone, inputDate;
-            if (studentType === 'new') {
-                inputName = document.getElementById('memberName').value;
-                inputPhone = document.getElementById('memberPhone').value;
-                inputDate = document.getElementById('assessmentDate').value;
-            } else {
-                inputName = document.getElementById('searchName').value;
-                inputPhone = document.getElementById('searchPhone').value;
-                inputDate = document.getElementById('existingAssessmentDate').value;
-            }
-            
             var data = {
                 // 會員資料（優先使用查詢結果）
-                studentType: studentType,
                 memberId: memberData ? memberData.id : '',
-                memberName: memberData ? memberData.name : inputName,
-                memberPhone: memberData ? memberData.phone : inputPhone,
-                assessmentDate: inputDate,
+                memberName: memberData ? memberData.name : document.getElementById('memberName').value,
+                memberPhone: memberData ? memberData.phone : document.getElementById('memberPhone').value,
+                assessmentDate: document.getElementById('assessmentDate').value,
                 
                 // 個人資料
                 goals: Array.from(document.querySelectorAll('input[name="goals"]:checked')).map(function(el) { return el.value; }),
@@ -2039,16 +2295,6 @@
             document.querySelectorAll('.main-content').forEach(function(c, i) { c.classList.toggle('active', i + 1 === currentPage); });
             if (currentPage === 3) updateSkeletonStep();
             if (currentPage === 4) updateMuscleStep();
-        }
-
-        function setStudentType(t) {
-            studentType = t;
-            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.toggle('active', b.textContent.indexOf(t === 'new' ? '新生' : '舊生') >= 0); });
-            document.getElementById('newStudentForm').style.display = t === 'new' ? 'block' : 'none';
-            document.getElementById('existingStudentForm').style.display = t === 'existing' ? 'block' : 'none';
-            memberData = null;
-            document.getElementById('newMemberSearchResult').innerHTML = '';
-            document.getElementById('existingMemberSearchResult').innerHTML = '';
         }
 
         function toggleExerciseDetails() {
