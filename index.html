@@ -463,6 +463,22 @@
             padding: 10px;
         }
         .coach-name { font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: #333; }
+        .coach-loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-size: 0.9rem;
+        }
+        .coach-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #999;
+            padding: 15px;
+            font-size: 0.85rem;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
         
         .half-star-rating {
             display: flex;
@@ -1582,7 +1598,7 @@
                         <div class="course-total-row"><label>總堂數</label><div class="inline-form" style="margin: 0;"><input type="number" id="totalCourses" placeholder="0" style="width: 80px;"><span>堂</span></div></div>
                         <div class="course-detail-row">
                             <div class="course-detail-item"><label>重訓</label><div class="inline-form"><input type="number" id="weightTraining" placeholder="0"><span>堂</span></div></div>
-                            <div class="course-detail-item"><label>器械</label><div class="inline-form"><input type="number" id="machineTraining" placeholder="0"><span>堂</span></div></div>
+                            <div class="course-detail-item"><label>皮拉提斯</label><div class="inline-form"><input type="number" id="pilatesTraining" placeholder="0"><span>堂</span></div></div>
                             <div class="course-detail-item"><label>伸展</label><div class="inline-form"><input type="number" id="stretchTraining" placeholder="0"><span>堂</span></div></div>
                         </div>
                     </div>
@@ -1600,16 +1616,15 @@
                     <label class="form-label">建議教練（0星嚴禁安排，0.5星起可安排，3星最推薦）</label>
                     <h4 style="color: var(--green-dark); margin: 10px 0 6px;">重訓教練</h4>
                     <div class="coach-grid" id="weightCoaches">
-                        <div class="coach-card"><div class="coach-name">王教練</div><div class="half-star-rating" data-coach="wang"><div class="star-container" data-star="1"><span class="star-bg">★</span><span class="star-fill">★</span></div><div class="star-container" data-star="2"><span class="star-bg">★</span><span class="star-fill">★</span></div><div class="star-container" data-star="3"><span class="star-bg">★</span><span class="star-fill">★</span></div><span class="rating-value">0</span></div></div>
-                        <div class="coach-card"><div class="coach-name">李教練</div><div class="half-star-rating" data-coach="li"><div class="star-container" data-star="1"><span class="star-bg">★</span><span class="star-fill">★</span></div><div class="star-container" data-star="2"><span class="star-bg">★</span><span class="star-fill">★</span></div><div class="star-container" data-star="3"><span class="star-bg">★</span><span class="star-fill">★</span></div><span class="rating-value">0</span></div></div>
+                        <div class="coach-loading">載入中...</div>
                     </div>
-                    <h4 style="color: var(--green-dark); margin: 10px 0 6px;">器械教練</h4>
-                    <div class="coach-grid" id="machineCoaches">
-                        <div class="coach-card"><div class="coach-name">林教練</div><div class="half-star-rating" data-coach="lin"><div class="star-container" data-star="1"><span class="star-bg">★</span><span class="star-fill">★</span></div><div class="star-container" data-star="2"><span class="star-bg">★</span><span class="star-fill">★</span></div><div class="star-container" data-star="3"><span class="star-bg">★</span><span class="star-fill">★</span></div><span class="rating-value">0</span></div></div>
+                    <h4 style="color: var(--green-dark); margin: 10px 0 6px;">皮拉提斯教練</h4>
+                    <div class="coach-grid" id="pilatesCoaches">
+                        <div class="coach-loading">載入中...</div>
                     </div>
                     <h4 style="color: var(--green-dark); margin: 10px 0 6px;">伸展老師</h4>
                     <div class="coach-grid" id="stretchCoaches">
-                        <div class="coach-card"><div class="coach-name">劉老師</div><div class="half-star-rating" data-coach="liu"><div class="star-container" data-star="1"><span class="star-bg">★</span><span class="star-fill">★</span></div><div class="star-container" data-star="2"><span class="star-bg">★</span><span class="star-fill">★</span></div><div class="star-container" data-star="3"><span class="star-bg">★</span><span class="star-fill">★</span></div><span class="rating-value">0</span></div></div>
+                        <div class="coach-loading">載入中...</div>
                     </div>
                 </div>
                 <div class="form-group"><label class="form-label">注意事項</label><textarea class="form-input" id="precautions" rows="2" placeholder="請填寫注意事項"></textarea></div>
@@ -1828,11 +1843,75 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('assessmentDate').valueAsDate = new Date();
             initMuscleHotspots();
-            initHalfStarRatings();
             initDragDrop();
             updateSkeletonStep();
             updateMuscleStep();
+            loadCoaches(); // 載入教練名單
         });
+
+        // ==================== 教練名單載入 ====================
+        async function loadCoaches() {
+            try {
+                var response = await fetch(CONFIG.MAKE_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'get_coaches' })
+                });
+                
+                var result = await response.json();
+                
+                if (result.success && result.coaches) {
+                    renderCoaches(result.coaches);
+                } else {
+                    showCoachError();
+                }
+            } catch (error) {
+                console.error('Load coaches error:', error);
+                showCoachError();
+            }
+        }
+        
+        function renderCoaches(coaches) {
+            var weightCoaches = coaches.filter(function(c) { return c.coach_type === 'weight'; });
+            var pilatesCoaches = coaches.filter(function(c) { return c.coach_type === 'pilates'; });
+            var stretchCoaches = coaches.filter(function(c) { return c.coach_type === 'stretch'; });
+            
+            renderCoachGrid('weightCoaches', weightCoaches);
+            renderCoachGrid('pilatesCoaches', pilatesCoaches);
+            renderCoachGrid('stretchCoaches', stretchCoaches);
+            
+            // 初始化評分功能
+            initHalfStarRatings();
+        }
+        
+        function renderCoachGrid(containerId, coaches) {
+            var container = document.getElementById(containerId);
+            
+            if (coaches.length === 0) {
+                container.innerHTML = '<div class="coach-empty">目前沒有教練</div>';
+                return;
+            }
+            
+            var html = coaches.map(function(coach) {
+                var coachId = coach.coach_name.replace(/\s/g, '_');
+                return '<div class="coach-card">' +
+                    '<div class="coach-name">' + coach.coach_name + '</div>' +
+                    '<div class="half-star-rating" data-coach="' + coachId + '">' +
+                    '<div class="star-container" data-star="1"><span class="star-bg">★</span><span class="star-fill">★</span></div>' +
+                    '<div class="star-container" data-star="2"><span class="star-bg">★</span><span class="star-fill">★</span></div>' +
+                    '<div class="star-container" data-star="3"><span class="star-bg">★</span><span class="star-fill">★</span></div>' +
+                    '<span class="rating-value">0</span>' +
+                    '</div></div>';
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+        
+        function showCoachError() {
+            ['weightCoaches', 'pilatesCoaches', 'stretchCoaches'].forEach(function(id) {
+                document.getElementById(id).innerHTML = '<div class="coach-empty">無法載入教練名單</div>';
+            });
+        }
 
         // ==================== 會員查詢 ====================
         async function searchMember() {
@@ -2380,7 +2459,7 @@
                     shortTermGoal: document.getElementById('shortTermGoal').value,
                     totalCourses: document.getElementById('totalCourses').value,
                     weightTraining: document.getElementById('weightTraining').value,
-                    machineTraining: document.getElementById('machineTraining').value,
+                    pilatesTraining: document.getElementById('pilatesTraining').value,
                     stretchTraining: document.getElementById('stretchTraining').value,
                     clientUnderstand: document.querySelector('input[name="clientUnderstand"]:checked')?.value || '',
                     functionalTraining: document.getElementById('functionalTraining').value,
