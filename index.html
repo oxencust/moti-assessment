@@ -164,6 +164,25 @@
         .checkbox-label:has(input:checked) {
             border-color: var(--green); background: var(--green-light);
         }
+        .disease-with-input {
+            flex-wrap: wrap;
+        }
+        .disease-input {
+            width: 100%;
+            margin-top: 8px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        .disease-input:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+        .disease-input:enabled {
+            background: white;
+            border-color: var(--green);
+        }
 
         .radio-group { display: flex; flex-wrap: wrap; gap: 5px; }
         .radio-btn {
@@ -1238,15 +1257,27 @@
                     <label class="form-label">疾病史（可複選）</label>
                     <div class="checkbox-group">
                         <label class="checkbox-label"><input type="checkbox" name="disease" value="心臟病"><span>心臟病</span></label>
-                        <label class="checkbox-label"><input type="checkbox" name="disease" value="高血壓"><span>高血壓</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="心絞痛"><span>心絞痛</span></label>
                         <label class="checkbox-label"><input type="checkbox" name="disease" value="糖尿病"><span>糖尿病</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="疝氣/脫腸"><span>疝氣/脫腸</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="高血壓"><span>高血壓</span></label>
                         <label class="checkbox-label"><input type="checkbox" name="disease" value="氣喘"><span>氣喘</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="貧血"><span>貧血</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="癲癇"><span>癲癇</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="甲狀腺問題"><span>甲狀腺問題</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="靜脈瘤"><span>靜脈瘤</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="惡性腫瘤"><span>惡性腫瘤</span></label>
                         <label class="checkbox-label"><input type="checkbox" name="disease" value="椎間盤突出"><span>椎間盤突出</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="習慣性脫臼"><span>習慣性脫臼</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="脊椎滑脫"><span>脊椎滑脫</span></label>
                         <label class="checkbox-label"><input type="checkbox" name="disease" value="骨質疏鬆症"><span>骨質疏鬆症</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="disease" value="痛風/風濕"><span>痛風/風濕</span></label>
+                        <label class="checkbox-label disease-with-input"><input type="checkbox" name="disease" value="關節問題" onchange="toggleDiseaseInput('jointInput', this)"><span>關節問題</span><input type="text" id="jointInput" class="disease-input" placeholder="請說明" disabled></label>
+                        <label class="checkbox-label disease-with-input"><input type="checkbox" name="disease" value="脊椎問題" onchange="toggleDiseaseInput('spineInput', this)"><span>脊椎問題</span><input type="text" id="spineInput" class="disease-input" placeholder="請說明" disabled></label>
+                        <label class="checkbox-label disease-with-input"><input type="checkbox" name="disease" value="其他" onchange="toggleDiseaseInput('otherDiseaseInput', this)"><span>其他</span><input type="text" id="otherDiseaseInput" class="disease-input" placeholder="請說明" disabled></label>
                         <label class="checkbox-label"><input type="checkbox" name="disease" value="無"><span>無</span></label>
                     </div>
                 </div>
-                <div class="form-group"><label class="form-label">關節/脊椎問題說明</label><textarea class="form-input" id="jointIssues" rows="2" placeholder="請描述任何關節或脊椎相關問題"></textarea></div>
                 <div class="form-group"><label class="form-label">備註（受傷/手術史/生活習慣/醫生建議）</label><textarea class="form-input" id="notes" rows="2" placeholder="請填寫相關備註"></textarea></div>
                 <div class="form-group">
                     <label class="form-label">過去運動經驗</label>
@@ -1947,6 +1978,7 @@
                 if (result.success && result.member) {
                     memberData = result.member;
                     showMemberResult(result.member, result.history || []);
+                    fillPersonalData(result.member); // 自動填入個人資料
                 } else {
                     showMemberError('查無此會員，請確認姓名和電話是否正確，或先至系統建檔');
                 }
@@ -2016,6 +2048,89 @@
             html += '</div>'; // 關閉 member-result
             
             document.getElementById('memberSearchResult').innerHTML = html;
+        }
+        
+        // 填入個人資料（從諮詢單/MySQL）
+        function fillPersonalData(member) {
+            // 1. 填入健身目標
+            if (member.goals) {
+                var goals = member.goals.split(/[,、，]/);
+                goals.forEach(function(goal) {
+                    goal = goal.trim();
+                    document.querySelectorAll('input[name="goals"]').forEach(function(cb) {
+                        if (cb.value === goal || goal.includes(cb.value)) {
+                            cb.checked = true;
+                            cb.closest('.checkbox-label').classList.add('selected');
+                        }
+                    });
+                });
+            }
+            
+            // 2. 填入疾病史
+            if (member.medical_history) {
+                var diseases = member.medical_history.split(/[,、，]/);
+                diseases.forEach(function(disease) {
+                    disease = disease.trim();
+                    
+                    // 處理帶說明的疾病（如：關節問題：左膝疼痛）
+                    var baseName = disease.split(/[:：]/)[0].trim();
+                    var detail = disease.split(/[:：]/)[1] ? disease.split(/[:：]/)[1].trim() : '';
+                    
+                    document.querySelectorAll('input[name="disease"]').forEach(function(cb) {
+                        if (cb.value === baseName || baseName.includes(cb.value)) {
+                            cb.checked = true;
+                            cb.closest('.checkbox-label').classList.add('selected');
+                            
+                            // 填入詳細說明
+                            if (detail) {
+                                if (baseName === '關節問題' || baseName.includes('關節')) {
+                                    var input = document.getElementById('jointInput');
+                                    if (input) { input.value = detail; input.disabled = false; }
+                                } else if (baseName === '脊椎問題' || baseName.includes('脊椎')) {
+                                    var input = document.getElementById('spineInput');
+                                    if (input) { input.value = detail; input.disabled = false; }
+                                } else if (baseName === '其他') {
+                                    var input = document.getElementById('otherDiseaseInput');
+                                    if (input) { input.value = detail; input.disabled = false; }
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // 3. 填入運動經驗
+            if (member.exercise_exp) {
+                var expValue = member.exercise_exp.trim();
+                if (expValue === '無') {
+                    var noExpCb = document.querySelector('input[name="exercise"][value="無"]');
+                    if (noExpCb) {
+                        noExpCb.checked = true;
+                        noExpCb.closest('.checkbox-label').classList.add('selected');
+                    }
+                } else if (expValue) {
+                    var hasExpCb = document.querySelector('input[name="exercise"][value="有"]');
+                    if (hasExpCb) {
+                        hasExpCb.checked = true;
+                        hasExpCb.closest('.checkbox-label').classList.add('selected');
+                        toggleExerciseDetails();
+                        
+                        // 解析運動經驗詳情（如：重訓2年、瑜珈1年）
+                        var expDetail = expValue.replace(/^有[:：]?\s*/, '');
+                        if (expDetail) {
+                            document.getElementById('exerciseType').value = expDetail;
+                        }
+                    }
+                }
+            }
+            
+            // 4. 填入備註（諮詢單備註）
+            if (member.consultation_notes) {
+                document.getElementById('notes').value = member.consultation_notes;
+            }
+            
+            // 顯示提示
+            showToast('已載入諮詢單資料，可編輯調整');
         }
         
         function showHistoryDetail(index) {
@@ -2370,8 +2485,7 @@
                 
                 // 個人資料
                 goals: Array.from(document.querySelectorAll('input[name="goals"]:checked')).map(function(el) { return el.value; }),
-                diseases: Array.from(document.querySelectorAll('input[name="disease"]:checked')).map(function(el) { return el.value; }),
-                jointIssues: document.getElementById('jointIssues').value,
+                diseases: collectDiseaseData(),
                 notes: document.getElementById('notes').value,
                 exerciseExperience: document.querySelector('input[name="exercise"]:checked')?.value || '',
                 exerciseType: document.getElementById('exerciseType').value,
@@ -2482,6 +2596,27 @@
             
             
             return data;
+        }
+        
+        function collectDiseaseData() {
+            var diseases = [];
+            document.querySelectorAll('input[name="disease"]:checked').forEach(function(el) {
+                var value = el.value;
+                // 如果是帶文字欄的選項，附加說明
+                if (value === '關節問題') {
+                    var detail = document.getElementById('jointInput').value.trim();
+                    diseases.push(detail ? value + '：' + detail : value);
+                } else if (value === '脊椎問題') {
+                    var detail = document.getElementById('spineInput').value.trim();
+                    diseases.push(detail ? value + '：' + detail : value);
+                } else if (value === '其他') {
+                    var detail = document.getElementById('otherDiseaseInput').value.trim();
+                    diseases.push(detail ? value + '：' + detail : value);
+                } else {
+                    diseases.push(value);
+                }
+            });
+            return diseases;
         }
         
         function formatMuscleText() {
@@ -2660,6 +2795,17 @@
         function toggleExerciseDetails() {
             var cb = document.querySelector('input[name="exercise"][value="有"]');
             document.getElementById('exerciseDetails').style.display = cb.checked ? 'block' : 'none';
+        }
+        
+        function toggleDiseaseInput(inputId, checkbox) {
+            var input = document.getElementById(inputId);
+            if (checkbox.checked) {
+                input.disabled = false;
+                input.focus();
+            } else {
+                input.disabled = true;
+                input.value = '';
+            }
         }
 
         // ==================== 骨骼評估步驟 ====================
