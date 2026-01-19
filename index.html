@@ -812,6 +812,11 @@
             color: #999;
             margin-top: 2px;
         }
+        .timeline-time {
+            font-size: 0.65rem;
+            color: #aaa;
+            margin-top: 1px;
+        }
         .timeline-node-new .timeline-date {
             color: var(--yellow-dark);
         }
@@ -1972,15 +1977,20 @@
             
             // 歷史紀錄節點
             historyData.forEach(function(h, index) {
-                var dateObj = new Date(h.date);
+                var dateStr = h.date || '';
+                var dateObj = new Date(dateStr.replace(/\//g, '-'));
                 var month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
                 var day = dateObj.getDate().toString().padStart(2, '0');
                 var year = dateObj.getFullYear();
+                var hours = dateObj.getHours().toString().padStart(2, '0');
+                var minutes = dateObj.getMinutes().toString().padStart(2, '0');
+                var timeStr = hours + ':' + minutes;
                 
                 html += '<div class="timeline-node" data-index="' + index + '" onclick="showHistoryDetail(' + index + ')">' +
                     '<div class="timeline-dot"></div>' +
                     '<div class="timeline-date">' + month + '/' + day + '</div>' +
                     '<div class="timeline-year">' + year + '</div>' +
+                    '<div class="timeline-time">' + timeStr + '</div>' +
                     '</div>';
             });
             
