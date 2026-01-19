@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>衡點健身 - 體態檢測評估系統</title>
+    <title>衡點健身 - MOTI 3D體態分析 回報表</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -54,11 +54,11 @@
             gap: 10px;
         }
         .logo-icon {
-            width: 36px; height: 36px;
+            padding: 6px 10px;
             background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
             border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold; font-size: 0.9rem;
+            color: white; font-weight: bold; font-size: 0.85rem;
             flex-shrink: 0;
         }
         .progress-container { display: flex; align-items: center; gap: 6px; }
@@ -1206,8 +1206,8 @@
     <div class="container">
         <div class="header">
             <div class="logo">
-                <div class="logo-icon">衡</div>
-                <span>衡點健身 體態檢測</span>
+                <div class="logo-icon">衡點</div>
+                <span>MOTI 3D體態分析 回報表</span>
             </div>
             <div class="progress-container">
                 <div class="progress-step active" onclick="goToPage(1)">1</div>
@@ -1915,15 +1915,15 @@
             var pilatesCoaches = coaches.filter(function(c) { return c.coach_type === 'pilates'; });
             var stretchCoaches = coaches.filter(function(c) { return c.coach_type === 'stretch'; });
             
-            renderCoachGrid('weightCoaches', weightCoaches);
-            renderCoachGrid('pilatesCoaches', pilatesCoaches);
-            renderCoachGrid('stretchCoaches', stretchCoaches);
+            renderCoachGrid('weightCoaches', weightCoaches, 'weight');
+            renderCoachGrid('pilatesCoaches', pilatesCoaches, 'pilates');
+            renderCoachGrid('stretchCoaches', stretchCoaches, 'stretch');
             
             // 初始化評分功能
             initHalfStarRatings();
         }
         
-        function renderCoachGrid(containerId, coaches) {
+        function renderCoachGrid(containerId, coaches, coachType) {
             var container = document.getElementById(containerId);
             
             if (coaches.length === 0) {
@@ -1935,7 +1935,7 @@
                 var coachId = coach.coach_name.replace(/\s/g, '_');
                 return '<div class="coach-card">' +
                     '<div class="coach-name">' + coach.coach_name + '</div>' +
-                    '<div class="half-star-rating" data-coach="' + coachId + '">' +
+                    '<div class="half-star-rating" data-coach="' + coachId + '" data-type="' + coachType + '" data-name="' + coach.coach_name + '">' +
                     '<div class="star-container" data-star="1"><span class="star-bg">★</span><span class="star-fill">★</span></div>' +
                     '<div class="star-container" data-star="2"><span class="star-bg">★</span><span class="star-fill">★</span></div>' +
                     '<div class="star-container" data-star="3"><span class="star-bg">★</span><span class="star-fill">★</span></div>' +
@@ -2644,6 +2644,10 @@
                     functionalTraining: document.getElementById('functionalTraining').value,
                     fasciaRelease: document.getElementById('fasciaRelease').value,
                     coachRatings: collectCoachRatings(),
+                    // 教練推薦（文字格式，給 Google Sheet 用）
+                    weightCoachText: formatCoachText('weight'),
+                    pilatesCoachText: formatCoachText('pilates'),
+                    stretchCoachText: formatCoachText('stretch'),
                     precautions: document.getElementById('precautions').value,
                     serviceNotes: document.getElementById('serviceNotes').value
                 }
@@ -2726,11 +2730,64 @@
         }
 
         function collectCoachRatings() {
-            var ratings = {};
+            var ratings = {
+                weight: [],
+                pilates: [],
+                stretch: []
+            };
+            
             document.querySelectorAll('.half-star-rating').forEach(function(el) {
-                ratings[el.dataset.coach] = parseFloat(el.dataset.value) || 0;
+                var rating = parseFloat(el.dataset.value) || 0;
+                if (rating > 0) {
+                    var type = el.dataset.type;
+                    var name = el.dataset.name;
+                    if (type && ratings[type]) {
+                        ratings[type].push({
+                            name: name,
+                            rating: rating
+                        });
+                    }
+                }
             });
+            
             return ratings;
+        }
+        
+        // 格式化教練推薦（排序 + 轉字串）
+        function formatCoachRatings(ratings) {
+            function sortAndFormat(list) {
+                if (!list || list.length === 0) return '';
+                // 依星數由高到低排序
+                list.sort(function(a, b) { return b.rating - a.rating; });
+                // 格式化：王教練:3星, 李教練:2.5星
+                return list.map(function(item) {
+                    return item.name + ':' + item.rating + '星';
+                }).join(', ');
+            }
+            
+            return {
+                weightCoaches: sortAndFormat(ratings.weight),
+                pilatesCoaches: sortAndFormat(ratings.pilates),
+                stretchCoaches: sortAndFormat(ratings.stretch)
+            };
+        }
+        
+        // 格式化教練評分為文字（給 Google Sheet 用）
+        function formatCoachText(coachType) {
+            var result = [];
+            document.querySelectorAll('.half-star-rating[data-type="' + coachType + '"]').forEach(function(el) {
+                var rating = parseFloat(el.dataset.value) || 0;
+                if (rating > 0) {
+                    var name = el.dataset.name;
+                    result.push({ name: name, rating: rating });
+                }
+            });
+            // 依星數由高到低排序
+            result.sort(function(a, b) { return b.rating - a.rating; });
+            // 格式化輸出
+            return result.map(function(item) {
+                return item.name + '(' + item.rating + '星)';
+            }).join(', ');
         }
 
         async function submitAssessment() {
