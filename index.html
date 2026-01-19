@@ -1749,6 +1749,9 @@
             // 【請填入】ImageKit URL Endpoint
             IMAGEKIT_URL_ENDPOINT: 'https://ik.imagekit.io/hanhealth/',
             
+            // 【請填入】GitHub Pages 相簿網址（格式：https://你的帳號.github.io/moti-album/）
+            ALBUM_BASE_URL: 'https://oxencust.github.io/moti-album/',
+            
             // 圖片壓縮設定（不用改）
             MAX_IMAGE_WIDTH: 1200,
             IMAGE_QUALITY: 0.7,
@@ -2052,34 +2055,42 @@
         
         // 填入個人資料（從諮詢單/MySQL）
         function fillPersonalData(member) {
-            // 1. 填入健身目標
+            console.log('fillPersonalData 被呼叫，資料：', member);
+            
+            // 1. 填入健身目標（分隔符：逗號、頓號、斜線）
             if (member.goals) {
-                var goals = member.goals.split(/[,、，]/);
+                var goals = member.goals.split(/[,、，\/]/);
+                console.log('健身目標解析：', goals);
                 goals.forEach(function(goal) {
                     goal = goal.trim();
+                    if (!goal) return;
                     document.querySelectorAll('input[name="goals"]').forEach(function(cb) {
-                        if (cb.value === goal || goal.includes(cb.value)) {
+                        if (cb.value === goal || goal.includes(cb.value) || cb.value.includes(goal)) {
                             cb.checked = true;
                             cb.closest('.checkbox-label').classList.add('selected');
+                            console.log('勾選目標：', cb.value);
                         }
                     });
                 });
             }
             
-            // 2. 填入疾病史
+            // 2. 填入疾病史（分隔符：逗號、頓號）
             if (member.medical_history) {
                 var diseases = member.medical_history.split(/[,、，]/);
+                console.log('疾病史解析：', diseases);
                 diseases.forEach(function(disease) {
                     disease = disease.trim();
+                    if (!disease) return;
                     
                     // 處理帶說明的疾病（如：關節問題：左膝疼痛）
                     var baseName = disease.split(/[:：]/)[0].trim();
                     var detail = disease.split(/[:：]/)[1] ? disease.split(/[:：]/)[1].trim() : '';
                     
                     document.querySelectorAll('input[name="disease"]').forEach(function(cb) {
-                        if (cb.value === baseName || baseName.includes(cb.value)) {
+                        if (cb.value === baseName || baseName.includes(cb.value) || cb.value.includes(baseName)) {
                             cb.checked = true;
                             cb.closest('.checkbox-label').classList.add('selected');
+                            console.log('勾選疾病：', cb.value);
                             
                             // 填入詳細說明
                             if (detail) {
@@ -2102,6 +2113,7 @@
             // 3. 填入運動經驗
             if (member.exercise_exp) {
                 var expValue = member.exercise_exp.trim();
+                console.log('運動經驗：', expValue);
                 if (expValue === '無') {
                     var noExpCb = document.querySelector('input[name="exercise"][value="無"]');
                     if (noExpCb) {
@@ -2115,10 +2127,11 @@
                         hasExpCb.closest('.checkbox-label').classList.add('selected');
                         toggleExerciseDetails();
                         
-                        // 解析運動經驗詳情（如：重訓2年、瑜珈1年）
+                        // 解析運動經驗詳情（如：有: 滑步機）
                         var expDetail = expValue.replace(/^有[:：]?\s*/, '');
                         if (expDetail) {
                             document.getElementById('exerciseType').value = expDetail;
+                            console.log('運動項目：', expDetail);
                         }
                     }
                 }
@@ -2127,6 +2140,7 @@
             // 4. 填入備註（諮詢單備註）
             if (member.consultation_notes) {
                 document.getElementById('notes').value = member.consultation_notes;
+                console.log('備註：', member.consultation_notes);
             }
             
             // 顯示提示
@@ -2461,10 +2475,19 @@
             
             document.getElementById('uploadProgress').classList.remove('active');
             
+            // 生成相簿連結
+            var albumUrl = '';
+            if (motiUrls.length > 0) {
+                albumUrl = CONFIG.ALBUM_BASE_URL + 
+                    '?member=' + encodeURIComponent(memberName) +
+                    '&date=' + assessmentDate +
+                    '&images=' + encodeURIComponent(motiUrls.join(','));
+            }
+            
             return {
                 motiUrls: motiUrls,
                 inbodyUrl: inbodyUrl,
-                motiFolder: CONFIG.IMAGEKIT_URL_ENDPOINT + motiFolder
+                motiFolder: albumUrl
             };
         }
 
