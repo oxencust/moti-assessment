@@ -2482,16 +2482,29 @@
             
             document.getElementById('uploadProgress').classList.add('active');
             
-            // 上傳 Moti 照片
-            for (var i = 0; i < motiFiles.length; i++) {
-                try {
-                    var url = await uploadToImageKit(motiFiles[i], motiFolder);
-                    motiUrls.push(url);
-                    uploadedCount++;
-                    updateProgress(uploadedCount, totalFiles);
-                } catch (error) {
-                    console.error('Moti upload error:', error);
-                }
+            // 並行上傳 Moti 照片（同時 5 張）
+            var CONCURRENT_LIMIT = 5;
+            for (var i = 0; i < motiFiles.length; i += CONCURRENT_LIMIT) {
+                var batch = motiFiles.slice(i, i + CONCURRENT_LIMIT);
+                var promises = batch.map(function(file) {
+                    return uploadToImageKit(file, motiFolder)
+                        .then(function(url) {
+                            uploadedCount++;
+                            updateProgress(uploadedCount, totalFiles);
+                            return url;
+                        })
+                        .catch(function(error) {
+                            console.error('Moti upload error:', error);
+                            uploadedCount++;
+                            updateProgress(uploadedCount, totalFiles);
+                            return null;
+                        });
+                });
+                
+                var results = await Promise.all(promises);
+                results.forEach(function(url) {
+                    if (url) motiUrls.push(url);
+                });
             }
             
             // 上傳 InBody 照片
