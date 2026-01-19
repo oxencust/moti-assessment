@@ -2283,8 +2283,11 @@
                     breathingPattern: document.getElementById('breathingPatternNote')?.value || ''
                 },
                 
-                // 肌肉張力
+                // 肌肉張力（JSON 格式）
                 muscles: collectMuscleData(),
+                
+                // 肌肉張力（文字格式，給 Google Sheet 用）
+                muscleText: formatMuscleText(),
                 
                 // 分析師建議
                 suggestions: {
@@ -2304,6 +2307,31 @@
             
             
             return data;
+        }
+        
+        function formatMuscleText() {
+            var muscles = collectMuscleData();
+            var result = {};
+            
+            Object.keys(muscles).forEach(function(group) {
+                var entries = muscles[group];
+                if (entries.length === 0) {
+                    result[group] = '';
+                } else {
+                    result[group] = entries.map(function(m, index) {
+                        var lines = [];
+                        lines.push('【' + (index + 1) + '】' + (m.name || '未命名'));
+                        if (m.status) lines.push('狀態：' + m.status);
+                        if (m.side) lines.push('側邊：' + m.side);
+                        if (m.level) lines.push('等級：' + m.level);
+                        if (m.suggest) lines.push('建議：' + m.suggest);
+                        if (m.note) lines.push('備註：' + m.note);
+                        return lines.join('｜');
+                    }).join('\n');
+                }
+            });
+            
+            return result;
         }
 
         function collectMuscleData() {
