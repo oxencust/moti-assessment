@@ -2003,9 +2003,9 @@
                 
                 if (result.success && result.analyst) {
                     analystData = result.analyst;
-                    document.getElementById('analystName').textContent = result.analyst.name;
+                    document.getElementById('analystName').textContent = result.analyst.coach_name;
                     document.getElementById('analystGroup').style.display = 'block';
-                    console.log('分析師載入成功:', result.analyst.name);
+                    console.log('分析師載入成功:', result.analyst.coach_name);
                 } else {
                     // 找不到分析師，隱藏欄位
                     document.getElementById('analystGroup').style.display = 'none';
@@ -2687,7 +2687,7 @@
                 
                 // 分析師資料
                 analystId: analystData ? analystData.id : '',
-                analystName: analystData ? analystData.name : '',
+                analystName: analystData ? analystData.coach_name : '',
                 analystLineId: document.getElementById('analystLineId').value,
                 
                 // 個人資料
@@ -3238,4 +3238,5 @@
     </script>
 </body>
 </html>
+
 
