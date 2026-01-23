@@ -1788,9 +1788,9 @@
             ALBUM_BASE_URL: 'https://oxencust.github.io/moti-album/',
             
             // 【請填入】骨骼肌肉圖 URL（上傳到 ImageKit 後填入）
-            BODY_FRONT_URL: 'https://ik.imagekit.io/hanhealth/assets/body-front.png',
-            BODY_BACK_URL: 'https://ik.imagekit.io/hanhealth/assets/body-back.png',
-            BODY_SIDE_URL: 'https://ik.imagekit.io/hanhealth/assets/body-side.png',
+            BODY_FRONT_URL: 'https://ik.imagekit.io/hanhealth/assets/body-front.png?updatedAt=1769149355576',
+            BODY_BACK_URL: 'https://ik.imagekit.io/hanhealth/assets/body-back.png?updatedAt=1769149354223',
+            BODY_SIDE_URL: 'https://ik.imagekit.io/hanhealth/assets/body-side.png?updatedAt=1769149355797',
             
             // 圖片壓縮設定（不用改）
             MAX_IMAGE_WIDTH: 1200,
@@ -1987,7 +1987,7 @@
         
         // 查詢分析師（從教練表）
         async function loadAnalyst(lineUserId) {
-            console.log('loadAnalyst 開始執行，lineUserId:', lineUserId);
+            console.log('loadAnalyst 開始執行，lineId:', lineUserId);
             try {
                 var response = await fetch(CONFIG.MAKE_WEBHOOK_URL, {
                     method: 'POST',
@@ -2603,7 +2603,7 @@
             var totalFiles = motiFiles.length + inbodyFiles.length;
             var uploadedCount = 0;
             
-            if (totalFiles === 0) return { motiUrls: [], inbodyUrl: '', motiFolder: '' };
+            if (totalFiles === 0) return { motiUrls: [], inbodyUrl: '' };
             
             var folderName = memberId + '_' + memberName;
             var motiFolder = 'moti/' + folderName + '/' + assessmentDate;
@@ -2649,19 +2649,10 @@
             
             document.getElementById('uploadProgress').classList.remove('active');
             
-            // 生成相簿連結
-            var albumUrl = '';
-            if (motiUrls.length > 0) {
-                albumUrl = CONFIG.ALBUM_BASE_URL + 
-                    '?member=' + encodeURIComponent(memberName) +
-                    '&date=' + assessmentDate +
-                    '&images=' + encodeURIComponent(motiUrls.join(','));
-            }
-            
+            // 相簿連結由後端產生（用 assessment_id）
             return {
                 motiUrls: motiUrls,
-                inbodyUrl: inbodyUrl,
-                motiFolder: albumUrl
+                inbodyUrl: inbodyUrl
             };
         }
 
@@ -2833,24 +2824,41 @@
         function formatMuscleText() {
             var muscles = collectMuscleData();
             var result = {};
+            var groupNames = {
+                shoulder: '肩膀肌群',
+                chest: '胸部肌群',
+                back: '背部肌群',
+                core: '核心肌群',
+                glute: '臀部肌群',
+                leg: '腿部肌群'
+            };
             
             Object.keys(muscles).forEach(function(group) {
                 var entries = muscles[group];
                 if (entries.length === 0) {
                     result[group] = '';
                 } else {
-                    result[group] = entries.map(function(m, index) {
-                        var lines = [];
-                        lines.push('【' + (index + 1) + '】' + (m.name || '未命名'));
-                        if (m.status) lines.push('狀態：' + m.status);
-                        if (m.side) lines.push('側邊：' + m.side);
-                        if (m.level) lines.push('等級：' + m.level);
-                        if (m.suggest) lines.push('建議：' + m.suggest);
-                        if (m.note) lines.push('備註：' + m.note);
-                        return lines.join('｜');
+                    // 格式：左三頭肌：緊繃 左側 7級 放鬆 備註：xxx
+                    result[group] = entries.map(function(m) {
+                        var parts = [m.name || '未命名'];
+                        if (m.status) parts.push(m.status);
+                        if (m.side) parts.push(m.side);
+                        if (m.level) parts.push(m.level + '級');
+                        if (m.suggest) parts.push('建議' + m.suggest);
+                        if (m.note) parts.push('備註：' + m.note);
+                        return parts.join(' ');
                     }).join('\n');
                 }
             });
+            
+            // 產生完整的 LINE 訊息格式
+            var lineText = [];
+            Object.keys(muscles).forEach(function(group) {
+                if (result[group]) {
+                    lineText.push('【' + groupNames[group] + '】\n' + result[group]);
+                }
+            });
+            result.all = lineText.join('\n\n');
             
             return result;
         }
@@ -2970,10 +2978,9 @@
                 var memberId = formData.memberId;
                 var imageData = await uploadAllImages(memberId, formData.memberName, formData.assessmentDate);
                 
-                // 整合資料
+                // 整合資料（相簿連結由後端產生）
                 formData.images = {
                     motiUrls: imageData.motiUrls,
-                    motiFolder: imageData.motiFolder,
                     motiCount: imageData.motiUrls.length,
                     inbodyUrl: imageData.inbodyUrl
                 };
@@ -2993,7 +3000,7 @@
                 document.getElementById('submitBtn').disabled = false;
                 
                 if (result.success) {
-                    showSuccess(formData, imageData);
+                    showSuccess(formData, imageData, result);
                 } else {
                     showToast('提交失敗：' + (result.error || '未知錯誤'));
                 }
@@ -3005,11 +3012,16 @@
             }
         }
         
-        function showSuccess(formData, imageData) {
+        function showSuccess(formData, imageData, result) {
             var details = '<p><strong>會員姓名：</strong>' + formData.memberName + '</p>' +
                 '<p><strong>檢測日期時間：</strong>' + formData.assessmentDate + ' ' + formData.assessmentTime + '</p>' +
                 '<p><strong>Moti 照片：</strong>' + (imageData.motiUrls.length || 0) + ' 張已上傳</p>' +
                 '<p><strong>InBody 照片：</strong>' + (imageData.inbodyUrl ? '1 張已上傳' : '無') + '</p>';
+            
+            // 顯示相簿連結（從後端返回）
+            if (result && result.albumUrl) {
+                details += '<p><strong>相簿連結：</strong><a href="' + result.albumUrl + '" target="_blank">' + result.albumUrl + '</a></p>';
+            }
             
             document.getElementById('successDetails').innerHTML = details;
             document.getElementById('successOverlay').classList.add('active');
@@ -3238,5 +3250,3 @@
     </script>
 </body>
 </html>
-
-
