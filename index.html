@@ -3484,7 +3484,7 @@
             btn.textContent = '上傳中...';
             
             try {
-                var memberId = memberData ? memberData.id : ('NEW_' + memberData.phone);
+                var memberId = memberData ? memberData.id : ('NEW_' + supplementData.memberName);
                 var folderName = memberId + '_' + supplementData.memberName;
                 var dateFolder = supplementData.assessmentDate.replace(/\//g, '-');
                 
@@ -3502,14 +3502,14 @@
                     inbodyUrl = await uploadToImageKit(supplementData.inbodyFiles[0], 'inbody/' + folderName + '/' + dateFolder);
                 }
                 
-                // 呼叫 Make 更新紀錄
+                // 呼叫 Make 更新紀錄（motiUrls 轉成逗號分隔字串）
                 var response = await fetch(CONFIG.MAKE_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'supplement_images',
                         assessmentId: supplementData.assessmentId,
-                        motiUrls: motiUrls,
+                        motiUrls: motiUrls.join(','),
                         inbodyUrl: inbodyUrl
                     })
                 });
