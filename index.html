@@ -1789,7 +1789,7 @@
             ALBUM_BASE_URL: 'https://oxencust.github.io/moti-album/',
             
             // 【請填入】骨骼肌肉圖 URL（上傳到 ImageKit 後填入）
-            BODY_FRONT_URL: 'https://ik.imagekit.io/hanhealth/assets/body-front.png?updatedAt=1769149355576L',
+            BODY_FRONT_URL: 'https://ik.imagekit.io/hanhealth/assets/body-front.png?updatedAt=1769149355576',
             BODY_BACK_URL: 'https://ik.imagekit.io/hanhealth/assets/body-back.png?updatedAt=1769149354223',
             BODY_SIDE_URL: 'https://ik.imagekit.io/hanhealth/assets/body-side.png?updatedAt=1769149355797',
             
@@ -2135,8 +2135,13 @@
                 '<div class="member-info-item"><span class="member-info-label">電話</span><span class="member-info-value">' + member.phone + '</span></div>' +
                 '</div>';
             
+            // 過濾掉無效的歷史資料（必須有 date 欄位）
+            var validHistory = (history || []).filter(function(h) {
+                return h && h.date;
+            });
+            
             // 儲存歷史資料到全域變數（從舊到新排序）
-            historyData = (history && history.length > 0) ? history.slice().reverse() : [];
+            historyData = validHistory.length > 0 ? validHistory.slice().reverse() : [];
             
             // 時間軸區塊
             html += '<div class="timeline-section">' +
