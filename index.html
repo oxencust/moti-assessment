@@ -2953,7 +2953,7 @@
                 analystLineId: document.getElementById('analystLineId').value,
                 
                 // 個人資料
-                goals: Array.from(document.querySelectorAll('input[name="goals"]:checked')).map(function(el) { return el.value; }),
+                goals: Array.from(document.querySelectorAll('input[name="goals"]:checked')).map(function(el) { return el.value; }).join(', '),
                 diseases: collectDiseaseData(),
                 notes: document.getElementById('notes').value,
                 exerciseExperience: document.querySelector('input[name="exercise"]:checked')?.value || '',
@@ -2976,39 +2976,39 @@
                     lumbarCurveDegree: document.getElementById('lumbarCurveDegree').value,
                     lumbarCurveDirection: document.querySelector('input[name="lumbarCurve"]:checked')?.value || '',
                     // 步驟2 頸椎
-                    cervicalStatus: Array.from(document.querySelectorAll('input[name="cervical"]:checked')).map(function(el) { return el.value; }),
+                    cervicalStatus: Array.from(document.querySelectorAll('input[name="cervical"]:checked')).map(function(el) { return el.value; }).join(', '),
                     cervicalDegree: document.getElementById('cervicalDegree').value,
                     // 步驟3 胸椎
-                    thoracicStatus: Array.from(document.querySelectorAll('input[name="thoracic"]:checked')).map(function(el) { return el.value; }),
+                    thoracicStatus: Array.from(document.querySelectorAll('input[name="thoracic"]:checked')).map(function(el) { return el.value; }).join(', '),
                     thoracicDegree: document.getElementById('thoracicDegree').value,
                     // 步驟4 腰椎
-                    lumbarStatus: Array.from(document.querySelectorAll('input[name="lumbar"]:checked')).map(function(el) { return el.value; }),
+                    lumbarStatus: Array.from(document.querySelectorAll('input[name="lumbar"]:checked')).map(function(el) { return el.value; }).join(', '),
                     lumbarDegree: document.getElementById('lumbarDegree').value,
                     // 步驟5 骨盆
-                    pelvisTilt: Array.from(document.querySelectorAll('input[name="pelvisTilt"]:checked')).map(function(el) { return el.value; }),
+                    pelvisTilt: Array.from(document.querySelectorAll('input[name="pelvisTilt"]:checked')).map(function(el) { return el.value; }).join(', '),
                     pelvisTiltDegree: document.getElementById('pelvisTiltDegree').value,
-                    pelvisSide: Array.from(document.querySelectorAll('input[name="pelvisSide"]:checked')).map(function(el) { return el.value; }),
+                    pelvisSide: Array.from(document.querySelectorAll('input[name="pelvisSide"]:checked')).map(function(el) { return el.value; }).join(', '),
                     pelvisSideDegree: document.getElementById('pelvisSideDegree').value,
-                    pelvisUpDown: Array.from(document.querySelectorAll('input[name="pelvisUpDown"]:checked')).map(function(el) { return el.value; }),
-                    pelvisRotation: Array.from(document.querySelectorAll('input[name="pelvisRotation"]:checked')).map(function(el) { return el.value; }),
+                    pelvisUpDown: Array.from(document.querySelectorAll('input[name="pelvisUpDown"]:checked')).map(function(el) { return el.value; }).join(', '),
+                    pelvisRotation: Array.from(document.querySelectorAll('input[name="pelvisRotation"]:checked')).map(function(el) { return el.value; }).join(', '),
                     pelvisRotationDegree: document.getElementById('pelvisRotationDegree').value,
                     functionalTilt: document.getElementById('functionalTilt').checked ? '是' : '否',
                     // 步驟6 膝蓋
-                    leftKnee: Array.from(document.querySelectorAll('input[name="leftKnee"]:checked')).map(function(el) { return el.value; }),
+                    leftKnee: Array.from(document.querySelectorAll('input[name="leftKnee"]:checked')).map(function(el) { return el.value; }).join(', '),
                     leftKneeDegree: document.getElementById('leftKneeDegree').value,
-                    rightKnee: Array.from(document.querySelectorAll('input[name="rightKnee"]:checked')).map(function(el) { return el.value; }),
+                    rightKnee: Array.from(document.querySelectorAll('input[name="rightKnee"]:checked')).map(function(el) { return el.value; }).join(', '),
                     rightKneeDegree: document.getElementById('rightKneeDegree').value,
                     // 步驟7 腳踝
-                    arch: Array.from(document.querySelectorAll('input[name="arch"]:checked')).map(function(el) { return el.value; }),
-                    footRotation: Array.from(document.querySelectorAll('input[name="footRotation"]:checked')).map(function(el) { return el.value; }),
+                    arch: Array.from(document.querySelectorAll('input[name="arch"]:checked')).map(function(el) { return el.value; }).join(', '),
+                    footRotation: Array.from(document.querySelectorAll('input[name="footRotation"]:checked')).map(function(el) { return el.value; }).join(', '),
                     // 步驟8 肩關節
                     shrug: document.querySelector('input[name="shrug"]:checked')?.value || '',
                     roundShoulder: document.querySelector('input[name="roundShoulder"]:checked')?.value || '',
                     roundShoulderDegree: document.getElementById('roundShoulderDegree').value,
-                    scapula: Array.from(document.querySelectorAll('input[name="scapula"]:checked')).map(function(el) { return el.value; }),
-                    humerus: Array.from(document.querySelectorAll('input[name="humerus"]:checked')).map(function(el) { return el.value; }),
+                    scapula: Array.from(document.querySelectorAll('input[name="scapula"]:checked')).map(function(el) { return el.value; }).join(', '),
+                    humerus: Array.from(document.querySelectorAll('input[name="humerus"]:checked')).map(function(el) { return el.value; }).join(', '),
                     // 步驟9 髖膝踝
-                    hip: Array.from(document.querySelectorAll('input[name="hip"]:checked')).map(function(el) { return el.value; }),
+                    hip: Array.from(document.querySelectorAll('input[name="hip"]:checked')).map(function(el) { return el.value; }).join(', '),
                     kneeStability: document.querySelector('input[name="kneeStability"]:checked')?.value || '',
                     ankleStability: document.querySelector('input[name="ankleStability"]:checked')?.value || '',
                     // 步驟10 呼吸
