@@ -1136,6 +1136,29 @@
             color: #999;
             font-size: 0.85rem;
         }
+        .course-detail-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .course-tag {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .course-tag.weight {
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+        .course-tag.pilates {
+            background: var(--blue-light);
+            color: #2a7a7a;
+        }
+        .course-tag.stretch {
+            background: var(--yellow-light);
+            color: #8a6d00;
+        }
         .note-list {
             display: flex;
             flex-direction: column;
@@ -3811,7 +3834,17 @@
             
             var btn = document.getElementById('supplementSubmitBtn');
             btn.disabled = true;
-            btn.textContent = '上傳中...';
+            
+            var totalFiles = supplementData.motiFiles.length + supplementData.inbodyFiles.length;
+            var uploadedCount = 0;
+            
+            // 更新按鈕顯示進度
+            function updateProgress() {
+                uploadedCount++;
+                btn.textContent = '上傳中 ' + uploadedCount + '/' + totalFiles;
+            }
+            
+            btn.textContent = '上傳中 0/' + totalFiles;
             
             try {
                 var memberId = memberData ? memberData.id : ('NEW_' + supplementData.memberName);
@@ -3825,15 +3858,27 @@
                 var motiUrls = [];
                 var inbodyUrl = '';
                 
-                // 上傳 Moti 照片
-                for (var i = 0; i < supplementData.motiFiles.length; i++) {
-                    var url = await uploadToImageKit(supplementData.motiFiles[i], 'moti/' + folderName + '/' + dateFolder);
-                    if (url) motiUrls.push(url);
+                // 並行上傳 Moti 照片（最多同時 5 張）
+                var CONCURRENT_LIMIT = 5;
+                for (var i = 0; i < supplementData.motiFiles.length; i += CONCURRENT_LIMIT) {
+                    var batch = supplementData.motiFiles.slice(i, i + CONCURRENT_LIMIT);
+                    var promises = batch.map(function(file) {
+                        return uploadToImageKit(file, 'moti/' + folderName + '/' + dateFolder)
+                            .then(function(url) {
+                                updateProgress();
+                                return url;
+                            });
+                    });
+                    var results = await Promise.all(promises);
+                    results.forEach(function(url) {
+                        if (url) motiUrls.push(url);
+                    });
                 }
                 
                 // 上傳 Inbody 照片
                 if (supplementData.inbodyFiles.length > 0) {
                     inbodyUrl = await uploadToImageKit(supplementData.inbodyFiles[0], 'inbody/' + folderName + '/' + dateFolder);
+                    updateProgress();
                 }
                 
                 // 呼叫 Make 更新紀錄（motiUrls 轉成逗號分隔字串）
