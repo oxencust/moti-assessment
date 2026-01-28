@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>衡點健身 - MOTI 3D體態分析 回報表</title>
+    <title>衡點健康 - MOTI 3D體態分析 回報表</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
@@ -2755,7 +2755,7 @@
             
             // 課程明細
             var weightCourses = parseInt(h.weight_training_courses) || 0;
-            var pilatesCourses = parseInt(h.pilates_courses) || 0;
+            var pilatesCourses = parseInt(h.pilates_training_courses) || 0;
             var stretchCourses = parseInt(h.stretch_courses) || 0;
             
             if (weightCourses > 0 || pilatesCourses > 0 || stretchCourses > 0) {
@@ -2878,33 +2878,40 @@
         
         function collectHistoryMuscleNotes(h) {
             var notes = [];
-            if (!h.muscle_data) return notes;
+            var groupNames = {
+                shoulder: '肩膀',
+                chest: '胸部',
+                back: '背部',
+                core: '核心',
+                glute: '臀部',
+                leg: '腿部'
+            };
             
-            try {
-                var muscleData = typeof h.muscle_data === 'string' ? JSON.parse(h.muscle_data) : h.muscle_data;
-                var groupNames = {
-                    shoulder: '肩膀',
-                    chest: '胸部',
-                    back: '背部',
-                    core: '核心',
-                    glute: '臀部',
-                    leg: '腿部'
-                };
+            // 從分開的 muscle_shoulder, muscle_chest 等欄位讀取
+            var muscleFields = ['shoulder', 'chest', 'back', 'core', 'glute', 'leg'];
+            muscleFields.forEach(function(group) {
+                var fieldName = 'muscle_' + group;
+                var fieldValue = h[fieldName];
                 
-                Object.keys(muscleData).forEach(function(group) {
-                    var muscles = muscleData[group];
-                    if (Array.isArray(muscles)) {
-                        muscles.forEach(function(m) {
-                            if (m.note && m.note.trim()) {
-                                var title = (groupNames[group] || group) + ' - ' + (m.name || '未命名');
-                                notes.push({ title: title, content: m.note });
-                            }
-                        });
-                    }
-                });
-            } catch (e) {
-                console.error('Parse muscle_data error:', e);
-            }
+                if (fieldValue && typeof fieldValue === 'string' && fieldValue.trim()) {
+                    // 文字格式：【1】股直肌｜狀態：無力｜側邊：雙腳｜建議：訓練｜備註：改善膝屈
+                    // 按換行分割每個肌肉項目
+                    var lines = fieldValue.split('\n').filter(function(line) {
+                        return line.trim();
+                    });
+                    
+                    lines.forEach(function(line) {
+                        // 移除【數字】前綴
+                        var content = line.replace(/^【\d+】/, '').trim();
+                        if (content) {
+                            notes.push({ 
+                                title: groupNames[group] || group, 
+                                content: content 
+                            });
+                        }
+                    });
+                }
+            });
             
             return notes;
         }
