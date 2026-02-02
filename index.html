@@ -2014,7 +2014,7 @@
                 <h2 class="card-title">📝 分析師建議</h2>
                 <div class="form-group"><label class="form-label">短期目標</label><textarea class="form-input" id="shortTermGoal" rows="2" placeholder="請填寫短期訓練目標"></textarea></div>
                 <div class="form-group">
-                    <label class="form-label">建議課程（4個月內）</label>
+                    <label class="form-label">建議課程（6個月內）</label>
                     <div class="course-suggestion-box">
                         <div class="course-total-row"><label>總堂數</label><div class="inline-form" style="margin: 0;"><input type="number" id="totalCourses" placeholder="0" style="width: 80px;" readonly><span>堂</span></div></div>
                         <div class="course-detail-row">
@@ -2173,7 +2173,7 @@
             IMAGEKIT_AUTH_URL: 'https://script.google.com/macros/s/AKfycbyoVmFxHHtH8xnHlvUVrADYOepAywFyTLh9GSql8LMiahIdgxNMedrI0elfT1yDr2Fw/exec',
             
             // 【請填入】ImageKit Public Key
-            IMAGEKIT_PUBLIC_KEY: 'public_tS8YfdCMhUonkM8VMZ+cCg71SHw',
+            IMAGEKIT_PUBLIC_KEY: 'public_tS8YfdCMhUonkM8VMZ+cCg71SHw=',
             
             // 【請填入】ImageKit URL Endpoint
             IMAGEKIT_URL_ENDPOINT: 'https://ik.imagekit.io/hanhealth/',
@@ -2569,14 +2569,29 @@
                 var result = await response.json();
                 hideLoading();
                 
-                if (result.success && result.member) {
-                    memberData = result.member;
+                // 支援 member（單數）和 members（複數）兩種格式
+                var member = null;
+                if (result.success) {
+                    if (result.member && typeof result.member === 'object' && result.member.name) {
+                        member = result.member;
+                    } else if (result.members) {
+                        // 如果是陣列取第一個，如果是物件直接使用
+                        if (Array.isArray(result.members) && result.members.length > 0) {
+                            member = result.members[0];
+                        } else if (typeof result.members === 'object' && result.members.name) {
+                            member = result.members;
+                        }
+                    }
+                }
+                
+                if (member && member.name && member.name !== 'null') {
+                    memberData = member;
                     var history = result.history || [];
-                    showMemberResult(result.member, history);
+                    showMemberResult(member, history);
                     
                     // 自動填入個人資料：優先用最新歷史紀錄，沒有則用諮詢單資料
                     var latestHistory = history.length > 0 ? history[0] : null;
-                    fillPersonalData(result.member, latestHistory);
+                    fillPersonalData(member, latestHistory);
                 } else {
                     // 查無會員，但允許繼續填寫（作為新會員）
                     memberData = null;
