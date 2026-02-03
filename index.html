@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>衡點健康 - MOTI 3D體態分析 回報表</title>
+    <title>衡點健身 - MOTI 3D體態分析 回報表</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
@@ -2203,6 +2203,390 @@
         var historyData = [];
         var currentPage = 1, currentSkeletonStep = 0, currentMuscleStepIndex = 0, muscleEntryCounter = 0;
         var lastMuscleInput = null; // 追蹤最近新增的肌肉輸入框
+        
+        // ==================== 自動暫存功能 ====================
+        var DRAFT_KEY = 'moti_assessment_draft';
+        var DRAFT_AUTOSAVE_INTERVAL = 30000; // 30秒自動儲存
+        var draftAutoSaveTimer = null;
+        
+        // 儲存草稿
+        function saveDraft() {
+            try {
+                var draft = {
+                    savedAt: new Date().toISOString(),
+                    // 會員資料
+                    memberName: document.getElementById('memberName').value,
+                    memberPhone: document.getElementById('memberPhone').value,
+                    memberData: memberData,
+                    // 日期時間
+                    assessmentDate: document.getElementById('assessmentDate').value,
+                    assessmentTime: document.getElementById('assessmentTime').value,
+                    // 個人資料
+                    goals: Array.from(document.querySelectorAll('input[name="goals"]:checked')).map(function(el) { return el.value; }),
+                    diseases: collectDiseaseDataForDraft(),
+                    notes: document.getElementById('notes').value,
+                    exerciseExperience: document.querySelector('input[name="exercise"]:checked')?.value || '',
+                    exerciseType: document.getElementById('exerciseType').value,
+                    exerciseDuration: document.getElementById('exerciseDuration').value,
+                    // 風險排名
+                    risk1: document.getElementById('risk1').value,
+                    risk2: document.getElementById('risk2').value,
+                    risk3: document.getElementById('risk3').value,
+                    // 骨骼評估
+                    skeleton: collectSkeletonDataForDraft(),
+                    // 骨骼備註
+                    skeletonNotes: collectSkeletonNotesForDraft(),
+                    // 肌肉評估
+                    muscles: collectMuscleDataForDraft()
+                };
+                
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+                console.log('草稿已自動儲存:', new Date().toLocaleTimeString());
+            } catch (e) {
+                console.warn('草稿儲存失敗:', e);
+            }
+        }
+        
+        // 收集疾病資料（簡化版）
+        function collectDiseaseDataForDraft() {
+            var diseases = [];
+            document.querySelectorAll('input[name="diseases"]:checked').forEach(function(el) {
+                diseases.push(el.value);
+            });
+            var other = document.getElementById('diseaseOther')?.value || '';
+            return { checked: diseases, other: other };
+        }
+        
+        // 收集骨骼資料（簡化版）
+        function collectSkeletonDataForDraft() {
+            var data = {};
+            // 收集所有骨骼相關的 radio 和 checkbox
+            var radioNames = ['scoliosis', 'thoracicCurve', 'lumbarCurve', 'cervical', 'thoracic', 'lumbar',
+                'pelvisTilt', 'pelvisSide', 'pelvisUpDown', 'pelvisRotation',
+                'leftKnee', 'rightKnee', 'arch', 'footRotation',
+                'shrug', 'roundShoulder', 'scapula', 'humerus',
+                'hip', 'kneeStability', 'ankleStability',
+                'breathingShallow', 'breathingPattern'];
+            
+            radioNames.forEach(function(name) {
+                var checked = document.querySelectorAll('input[name="' + name + '"]:checked');
+                if (checked.length > 0) {
+                    data[name] = Array.from(checked).map(function(el) { return el.value; });
+                }
+            });
+            
+            // 收集數值輸入
+            var degreeIds = ['thoracicCurveDegree', 'lumbarCurveDegree', 'cervicalDegree', 'thoracicDegree',
+                'lumbarDegree', 'pelvisTiltDegree', 'pelvisSideDegree', 'pelvisRotationDegree',
+                'leftKneeDegree', 'rightKneeDegree', 'roundShoulderDegree'];
+            
+            degreeIds.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el && el.value) data[id] = el.value;
+            });
+            
+            // 功能性骨盆前傾 checkbox
+            var funcTilt = document.getElementById('functionalTilt');
+            if (funcTilt) data.functionalTilt = funcTilt.checked;
+            
+            return data;
+        }
+        
+        // 收集骨骼備註
+        function collectSkeletonNotesForDraft() {
+            var notes = {};
+            var noteIds = ['scoliosisNote', 'thoracicCurveNote', 'lumbarCurveNote', 'cervicalNote',
+                'thoracicNote', 'lumbarNote', 'pelvisTiltNote', 'pelvisSideNote', 'pelvisRotationNote',
+                'functionalTiltNote', 'leftKneeNote', 'rightKneeNote', 'archNote', 'footRotationNote',
+                'shrugNote', 'roundShoulderNote', 'scapulaNote', 'humerusNote', 'hipNote',
+                'kneeStabilityNote', 'ankleStabilityNote', 'breathingShallowNote', 'breathingPatternNote'];
+            
+            noteIds.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el && el.value) notes[id] = el.value;
+            });
+            return notes;
+        }
+        
+        // 收集肌肉資料（與正式收集相同格式）
+        function collectMuscleDataForDraft() {
+            var muscles = {};
+            ['shoulder', 'chest', 'back', 'core', 'glute', 'leg'].forEach(function(group) {
+                var containerId = group === 'shoulder' ? 'shoulderMuscles' : 
+                                  group === 'chest' ? 'chestMuscles' :
+                                  group === 'back' ? 'backMuscles' :
+                                  group === 'core' ? 'coreMuscles' :
+                                  group === 'glute' ? 'gluteMuscles' : 'legMuscles';
+                var container = document.getElementById(containerId);
+                if (!container) return;
+                var entries = container.querySelectorAll('.muscle-entry');
+                muscles[group] = [];
+                entries.forEach(function(entry) {
+                    var id = entry.id;
+                    var nameInput = entry.querySelector('.muscle-name-input');
+                    if (nameInput && nameInput.value) {
+                        muscles[group].push({
+                            name: nameInput.value,
+                            status: document.querySelector('input[name="' + id + '_status"]:checked')?.value || '',
+                            side: document.querySelector('input[name="' + id + '_side"]:checked')?.value || '',
+                            level: document.querySelector('input[name="' + id + '_level"]:checked')?.value || '',
+                            suggest: document.querySelector('input[name="' + id + '_suggest"]:checked')?.value || '',
+                            note: document.getElementById(id + '_note')?.value || ''
+                        });
+                    }
+                });
+            });
+            return muscles;
+        }
+        
+        // 載入草稿
+        function loadDraft() {
+            try {
+                var draftStr = localStorage.getItem(DRAFT_KEY);
+                if (!draftStr) return null;
+                return JSON.parse(draftStr);
+            } catch (e) {
+                console.warn('草稿讀取失敗:', e);
+                return null;
+            }
+        }
+        
+        // 清除草稿
+        function clearDraft() {
+            localStorage.removeItem(DRAFT_KEY);
+            console.log('草稿已清除');
+        }
+        
+        // 恢復草稿到表單
+        function restoreDraft(draft) {
+            if (!draft) return;
+            
+            try {
+                // 會員資料
+                if (draft.memberName) document.getElementById('memberName').value = draft.memberName;
+                if (draft.memberPhone) document.getElementById('memberPhone').value = draft.memberPhone;
+                if (draft.memberData) memberData = draft.memberData;
+                
+                // 日期時間（保留當前日期時間，除非草稿有值）
+                // if (draft.assessmentDate) document.getElementById('assessmentDate').value = draft.assessmentDate;
+                // if (draft.assessmentTime) document.getElementById('assessmentTime').value = draft.assessmentTime;
+                
+                // 個人資料
+                if (draft.goals && draft.goals.length > 0) {
+                    draft.goals.forEach(function(val) {
+                        var el = document.querySelector('input[name="goals"][value="' + val + '"]');
+                        if (el) {
+                            el.checked = true;
+                            var label = el.closest('.checkbox-label');
+                            if (label) label.classList.add('checked');
+                        }
+                    });
+                }
+                
+                if (draft.diseases) {
+                    if (draft.diseases.checked) {
+                        draft.diseases.checked.forEach(function(val) {
+                            var el = document.querySelector('input[name="diseases"][value="' + val + '"]');
+                            if (el) {
+                                el.checked = true;
+                                var label = el.closest('.checkbox-label');
+                                if (label) label.classList.add('checked');
+                            }
+                        });
+                    }
+                    if (draft.diseases.other) {
+                        var otherEl = document.getElementById('diseaseOther');
+                        if (otherEl) otherEl.value = draft.diseases.other;
+                    }
+                }
+                
+                if (draft.notes) document.getElementById('notes').value = draft.notes;
+                
+                if (draft.exerciseExperience) {
+                    var el = document.querySelector('input[name="exercise"][value="' + draft.exerciseExperience + '"]');
+                    if (el) {
+                        el.checked = true;
+                        el.dataset.wasChecked = 'true';
+                        var label = el.closest('.radio-btn');
+                        if (label) label.classList.add('checked');
+                    }
+                }
+                
+                if (draft.exerciseType) document.getElementById('exerciseType').value = draft.exerciseType;
+                if (draft.exerciseDuration) document.getElementById('exerciseDuration').value = draft.exerciseDuration;
+                
+                // 風險排名
+                if (draft.risk1) document.getElementById('risk1').value = draft.risk1;
+                if (draft.risk2) document.getElementById('risk2').value = draft.risk2;
+                if (draft.risk3) document.getElementById('risk3').value = draft.risk3;
+                
+                // 骨骼評估
+                if (draft.skeleton) {
+                    Object.keys(draft.skeleton).forEach(function(key) {
+                        if (key.endsWith('Degree') || key === 'functionalTilt') {
+                            // 數值或 checkbox
+                            var el = document.getElementById(key);
+                            if (el) {
+                                if (el.type === 'checkbox') {
+                                    el.checked = draft.skeleton[key];
+                                } else {
+                                    el.value = draft.skeleton[key];
+                                }
+                            }
+                        } else {
+                            // radio 或 checkbox 群組
+                            var values = draft.skeleton[key];
+                            if (values && values.length > 0) {
+                                values.forEach(function(val) {
+                                    var el = document.querySelector('input[name="' + key + '"][value="' + val + '"]');
+                                    if (el) {
+                                        el.checked = true;
+                                        if (el.type === 'radio') {
+                                            el.dataset.wasChecked = 'true';
+                                        }
+                                        var label = el.closest('.radio-btn, .checkbox-label');
+                                        if (label) label.classList.add('checked');
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+                
+                // 骨骼備註
+                if (draft.skeletonNotes) {
+                    Object.keys(draft.skeletonNotes).forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = draft.skeletonNotes[id];
+                    });
+                }
+                
+                // 肌肉評估
+                if (draft.muscles) {
+                    var groupContainerMap = {
+                        shoulder: 'shoulderMuscles',
+                        chest: 'chestMuscles',
+                        back: 'backMuscles',
+                        core: 'coreMuscles',
+                        glute: 'gluteMuscles',
+                        leg: 'legMuscles'
+                    };
+                    
+                    Object.keys(draft.muscles).forEach(function(group) {
+                        var muscleList = draft.muscles[group];
+                        if (!muscleList || muscleList.length === 0) return;
+                        
+                        var containerId = groupContainerMap[group];
+                        if (!containerId) return;
+                        
+                        muscleList.forEach(function(muscle) {
+                            // 新增肌肉項目
+                            addMuscleEntry(containerId, group);
+                            
+                            // 取得剛新增的項目
+                            var container = document.getElementById(containerId);
+                            var entries = container.querySelectorAll('.muscle-entry');
+                            var entry = entries[entries.length - 1];
+                            if (!entry) return;
+                            
+                            var entryId = entry.id;
+                            
+                            // 填入資料
+                            var nameInput = entry.querySelector('.muscle-name-input');
+                            if (nameInput) nameInput.value = muscle.name || '';
+                            
+                            // 恢復 radio 選項
+                            ['status', 'side', 'level', 'suggest'].forEach(function(field) {
+                                if (muscle[field]) {
+                                    var radio = document.querySelector('input[name="' + entryId + '_' + field + '"][value="' + muscle[field] + '"]');
+                                    if (radio) {
+                                        radio.checked = true;
+                                        radio.dataset.wasChecked = 'true';
+                                        var label = radio.closest('.radio-btn');
+                                        if (label) label.classList.add('checked');
+                                    }
+                                }
+                            });
+                            
+                            // 恢復備註
+                            var noteInput = document.getElementById(entryId + '_note');
+                            if (noteInput && muscle.note) noteInput.value = muscle.note;
+                        });
+                    });
+                }
+                
+                console.log('草稿已恢復');
+            } catch (e) {
+                console.warn('草稿恢復失敗:', e);
+            }
+        }
+        
+        // 檢查是否有草稿並詢問恢復
+        function checkAndRestoreDraft() {
+            var draft = loadDraft();
+            if (!draft) return;
+            
+            var savedTime = new Date(draft.savedAt);
+            var timeStr = savedTime.toLocaleString('zh-TW');
+            var memberInfo = draft.memberName ? '（' + draft.memberName + '）' : '';
+            
+            if (confirm('發現未完成的檢測資料' + memberInfo + '\n儲存時間：' + timeStr + '\n\n是否要恢復？\n\n點擊「確定」恢復資料\n點擊「取消」開始新的檢測')) {
+                restoreDraft(draft);
+                showToast('已恢復上次的檢測資料');
+            } else {
+                clearDraft();
+            }
+        }
+        
+        // 初始化自動儲存
+        function initAutoSave() {
+            // 定時自動儲存
+            draftAutoSaveTimer = setInterval(function() {
+                // 只有當有填寫內容時才儲存
+                var memberName = document.getElementById('memberName').value;
+                var memberPhone = document.getElementById('memberPhone').value;
+                if (memberName || memberPhone) {
+                    saveDraft();
+                }
+            }, DRAFT_AUTOSAVE_INTERVAL);
+            
+            // 監聽欄位變更（使用事件委派）
+            document.body.addEventListener('change', function(e) {
+                // 延遲儲存，避免頻繁觸發
+                clearTimeout(window.draftChangeTimer);
+                window.draftChangeTimer = setTimeout(function() {
+                    var memberName = document.getElementById('memberName').value;
+                    var memberPhone = document.getElementById('memberPhone').value;
+                    if (memberName || memberPhone) {
+                        saveDraft();
+                    }
+                }, 2000);
+            });
+            
+            // 監聽文字輸入（防抖動）
+            document.body.addEventListener('input', function(e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    clearTimeout(window.draftInputTimer);
+                    window.draftInputTimer = setTimeout(function() {
+                        var memberName = document.getElementById('memberName').value;
+                        var memberPhone = document.getElementById('memberPhone').value;
+                        if (memberName || memberPhone) {
+                            saveDraft();
+                        }
+                    }, 3000);
+                }
+            });
+            
+            // 頁面關閉前儲存
+            window.addEventListener('beforeunload', function() {
+                var memberName = document.getElementById('memberName').value;
+                var memberPhone = document.getElementById('memberPhone').value;
+                if (memberName || memberPhone) {
+                    saveDraft();
+                }
+            });
+        }
+        // ==================== 自動暫存功能結束 ====================
 
         // 安全解析 JSON（處理控制字元）
         async function safeParseJSON(response) {
@@ -2362,6 +2746,14 @@
             
             // 先初始化 LIFF 登入，登入成功後才載入教練名單
             initLiff();
+            
+            // 初始化自動暫存功能
+            initAutoSave();
+            
+            // 檢查是否有未完成的草稿
+            setTimeout(function() {
+                checkAndRestoreDraft();
+            }, 500);
         });
         
         // ==================== Radio 取消選擇功能 ====================
@@ -3701,6 +4093,9 @@
                 document.getElementById('submitBtn').disabled = false;
                 
                 if (result.success) {
+                    // 清除草稿
+                    clearDraft();
+                    
                     // 如果是從待預約名冊選擇的，標記為已完成
                     if (window.selectedBookingId) {
                         markBookingCompleted(window.selectedBookingId);
